@@ -1,10 +1,7 @@
+import AppRoutes from "./routes/AppRoutes";
+
 function App() {
-  return (
-    <div>
-      <h1>OralScan AI</h1>
-      <p>AI-Powered Oral Cancer Detection System</p>
-    </div>
-  );
+  return <AppRoutes />;
 }
 
 export default App;

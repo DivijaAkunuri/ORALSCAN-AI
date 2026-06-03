@@ -1,24 +1,84 @@
 import { useState } from "react";
+import axios from "axios";
 
 export default function ImageUploader() {
 
   const [image, setImage] =
     useState(null);
 
-  const handleImageUpload = (e) => {
+  const [loading, setLoading] =
+    useState(false);
 
-    const file = e.target.files[0];
+  const [message, setMessage] =
+    useState("");
 
-    if (file) {
+  const handleImageUpload =
+    async (e) => {
+
+      const file =
+        e.target.files[0];
+
+      if (!file) return;
+
       setImage(
         URL.createObjectURL(file)
       );
-    }
-  };
 
-  const handleRemoveImage = () => {
-    setImage(null);
-  };
+      const formData =
+        new FormData();
+
+      formData.append(
+        "image",
+        file
+      );
+
+      try {
+
+        setLoading(true);
+
+        const response =
+          await axios.post(
+            "http://127.0.0.1:5000/api/upload/image",
+            formData,
+            {
+              headers: {
+                "Content-Type":
+                  "multipart/form-data",
+              },
+            }
+          );
+
+        setMessage(
+          "Image uploaded successfully!"
+        );
+
+        console.log(
+          response.data
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        setMessage(
+          "Upload failed."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+  const handleRemoveImage =
+    () => {
+
+      setImage(null);
+
+      setMessage("");
+
+    };
 
   return (
     <div className="bg-white rounded-2xl shadow p-6">
@@ -66,13 +126,29 @@ export default function ImageUploader() {
         onChange={handleImageUpload}
       />
 
+      {loading && (
+        <p className="mt-4 text-blue-600 font-medium">
+          Uploading...
+        </p>
+      )}
+
+      {message && (
+        <p className="mt-4 text-green-600 font-medium">
+          {message}
+        </p>
+      )}
+
       {image && (
+
         <button
-          onClick={handleRemoveImage}
+          onClick={
+            handleRemoveImage
+          }
           className="mt-4 w-full bg-red-500 text-white py-3 rounded-xl font-medium hover:bg-red-600 transition"
         >
           Remove Image
         </button>
+
       )}
 
     </div>

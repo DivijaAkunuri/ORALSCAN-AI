@@ -1,156 +1,62 @@
-import { useState } from "react";
 import axios from "axios";
+import { useState } from "react";
 
 export default function ImageUploader() {
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
 
-  const [image, setImage] =
-    useState(null);
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Select an image first");
+      return;
+    }
 
-  const [loading, setLoading] =
-    useState(false);
+    const formData = new FormData();
+    formData.append("image", file);
 
-  const [message, setMessage] =
-    useState("");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-  const handleImageUpload =
-    async (e) => {
+    formData.append("patientName", user?.name || "Unknown");
+    formData.append("email", user?.email || "");
 
-      const file =
-        e.target.files[0];
-
-      if (!file) return;
-
-      setImage(
-        URL.createObjectURL(file)
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/upload/image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      const formData =
-        new FormData();
+      console.log("UPLOAD RESULT:", res.data);
 
-      formData.append(
-        "image",
-        file
-      );
-
-      try {
-
-        setLoading(true);
-
-        const response =
-          await axios.post(
-            "http://127.0.0.1:5000/api/upload/image",
-            formData,
-            {
-              headers: {
-                "Content-Type":
-                  "multipart/form-data",
-              },
-            }
-          );
-
-        setMessage(
-          "Image uploaded successfully!"
-        );
-
-        console.log(
-          response.data
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        setMessage(
-          "Upload failed."
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-  const handleRemoveImage =
-    () => {
-
-      setImage(null);
-
-      setMessage("");
-
-    };
+      setResult(res.data.scan);
+    } catch (err) {
+      console.log("UPLOAD ERROR:", err.message);
+      alert("Upload failed");
+    }
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6">
-
-      <h3 className="text-xl font-semibold mb-4">
-        Upload Oral Image
-      </h3>
-
-      <label
-        htmlFor="oral-image"
-        className="cursor-pointer block"
-      >
-
-        {image ? (
-
-          <img
-            src={image}
-            alt="Uploaded"
-            className="w-full h-80 object-cover rounded-xl border"
-          />
-
-        ) : (
-
-          <div className="h-80 border-2 border-dashed border-blue-300 rounded-xl flex flex-col items-center justify-center">
-
-            <p className="text-lg font-medium text-gray-700">
-              Upload Image
-            </p>
-
-            <p className="text-sm text-gray-500 mt-2">
-              Click here to select an oral scan image
-            </p>
-
-          </div>
-
-        )}
-
-      </label>
-
+    <div>
       <input
-        id="oral-image"
         type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleImageUpload}
+        onChange={(e) => setFile(e.target.files[0])}
       />
 
-      {loading && (
-        <p className="mt-4 text-blue-600 font-medium">
-          Uploading...
-        </p>
+      <button onClick={handleUpload}>
+        Upload Image
+      </button>
+
+      {result && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Result:</h3>
+          <p>Prediction: {result.prediction}</p>
+          <p>Confidence: {result.confidence}%</p>
+        </div>
       )}
-
-      {message && (
-        <p className="mt-4 text-green-600 font-medium">
-          {message}
-        </p>
-      )}
-
-      {image && (
-
-        <button
-          onClick={
-            handleRemoveImage
-          }
-          className="mt-4 w-full bg-red-500 text-white py-3 rounded-xl font-medium hover:bg-red-600 transition"
-        >
-          Remove Image
-        </button>
-
-      )}
-
     </div>
   );
 }
